@@ -1,5 +1,6 @@
 <p align="center">
-  <a href="https://github.com/ov7a/link-issue-action/actions"><img alt="build status" src="https://github.com/ov7a/link-issue-action/workflows/build-test/badge.svg"></a>
+  <a href="https://github.com/ov7a/link-issue-action/actions"><img alt="build status" src="https://github.com/ov7a/link-issue-action/workflows/build/badge.svg"></a>
+  <a href="https://github.com/ov7a/link-issue-action/actions"><img alt="build status" src="https://github.com/ov7a/link-issue-action/workflows/check-dist/badge.svg"></a>
 </p>
 
 # Link issue Github Action
@@ -12,10 +13,11 @@ The possible inputs for this action are:
 
 | Parameter | Required? | Default | Description |
 | --------- | --------- | ------- | ----------- |
-| source    | no        | branch, title, commit | A list of locations where issue id should be taken from. Possible values: branch, title, commit. |
-| issue-pattern | yes   | | A regex to match and extract issue id. For example, use `[A-Z][A-Z]+-\\d+` for JIRA issues or `#(\\d+)` for Redmine issues. |
-| link-template | yes   | |  Link template to paste id or it part into. You should use regex groups here. Example: `https://example.com/browse/issues/$0` |
-| link-name | no        | Related issue | Human-readable name for issue link. If empty, then just duplicates the link itself. |
+| sources   | no        | branch, title, commit | A list of locations where issue id should be taken from. Possible values: branch, title, commit. |
+| issue-pattern | yes   | | A regex to match and extract issue id. For example, use `[A-Z][A-Z]+-\d+` for JIRA issues or `#(\d+)` for Redmine issues. |
+| link-template | yes   | |  Link template to paste id or its part into. You should use regex groups here. Example: `https://example.com/browse/issues/$0` |
+| link-name-template | no | `$0` | Template for link name |
+| link-preamble | no    | Related issues | Text before list of links |
 | link-location | no    | end | Location to paste link to. Possible values: `start`, `end`. |
 | token     | no        | GITHUB_TOKEN | [GitHub token](https://docs.github.com/en/actions/security-guides/automatic-token-authentication) |
 
@@ -39,8 +41,8 @@ jobs:
       - name: Link Jira Issue
         uses: ov7a/link-issue-action@v1
         with:
-          source: title
-          issue-pattern: '[A-Z][A-Z]+-\\d'
+          sources: title
+          issue-pattern: '[A-Z][A-Z]+-\d'
           link-template: 'https://somedomain.atlassian.net/browse/$0'
 ```
 
@@ -61,17 +63,16 @@ jobs:
       - name: Link Redmine Issue
         uses: ov7a/link-issue-action@v1
         with:
-          source: |
+          sources: |
             branch
             commit
-          issue-pattern: '#(\\d+)'
+          issue-pattern: '#(\d+)'
           link-template: 'https://somedomain.com/issues/$1'
-          link-name: See issue
           link-location: start
 ```
 
 ## Building
 
 ```bash
-npm run build && npm run package && npm test
+npm run all
 ```

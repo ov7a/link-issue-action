@@ -1,6 +1,35 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 9256:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+if (!Array.prototype.uniqBy) {
+    Array.prototype.uniqBy = function (getter) {
+        const seen = new Set();
+        return this.filter(elem => {
+            const transformed = getter(elem);
+            const isDuplicate = seen.has(transformed);
+            seen.add(transformed);
+            return !isDuplicate;
+        });
+    };
+}
+function notEmpty(value) {
+    return value !== null && value !== undefined;
+}
+if (!Array.prototype.filterNotNull) {
+    Array.prototype.filterNotNull = function () {
+        return this.filter(notEmpty);
+    };
+}
+
+
+/***/ }),
+
 /***/ 9609:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -8,7 +37,11 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -49,7 +82,7 @@ function extractPRTitle() {
 }
 function extractBranchName() {
     return __awaiter(this, void 0, void 0, function* () {
-        const branchName = process.env.GITHUB_REF_NAME;
+        const branchName = process.env.GITHUB_HEAD_REF;
         if (!branchName) {
             throw new Error('Unable to retrieve the branch name.');
         }
@@ -66,26 +99,26 @@ function extractCommitsMessages(octokit) {
         const response = yield octokit.rest.pulls.listCommits({
             owner: pr.owner,
             repo: pr.repo,
-            pull_number: pr.number,
+            pull_number: pr.number
         });
         return response.data.map(commit => commit.commit.message);
     });
 }
 const extractors = {
-    'branch': () => extractBranchName().then(r => [r]),
-    'title': () => extractPRTitle().then(r => [r]),
-    'commit': extractCommitsMessages
+    branch: () => __awaiter(void 0, void 0, void 0, function* () { return [yield extractBranchName()]; }),
+    title: () => __awaiter(void 0, void 0, void 0, function* () { return [yield extractPRTitle()]; }),
+    commit: extractCommitsMessages
 };
 function extractAll(octokit, sources) {
     return __awaiter(this, void 0, void 0, function* () {
-        const promises = sources.map(source => {
+        const promises = sources.map((source) => __awaiter(this, void 0, void 0, function* () {
             const extractor = extractors[source];
             if (!extractor) {
                 throw new Error(`Unknown source: ${source}`);
             }
             return extractor(octokit);
-        });
-        return Promise.all(promises).then(messages => messages.flat());
+        }));
+        return (yield Promise.all(promises)).flat();
     });
 }
 exports.extractAll = extractAll;
@@ -93,42 +126,48 @@ exports.extractAll = extractAll;
 
 /***/ }),
 
-/***/ 211:
+/***/ 3466:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getLinks = void 0;
-__nccwpck_require__(918);
-function getLinks(issueIdPattern, linkTemplate, inputs) {
+__nccwpck_require__(9256);
+function getLinks(issueIdPattern, linkTemplate, linkNameTemplate, inputs) {
     const issueIdRegex = new RegExp(issueIdPattern, 'g');
     return inputs
         .flatMap(message => [...message.matchAll(issueIdRegex)])
         .filterNotNull()
-        .map(match => getLink(linkTemplate, match))
-        .uniq();
+        .map(match => getLink(linkTemplate, linkNameTemplate, match))
+        .uniqBy(link => link.url);
 }
 exports.getLinks = getLinks;
-function getLink(linkTemplate, match) {
-    let result = linkTemplate;
-    match.forEach((group, index) => {
-        result = result.replace(`$${index}`, group);
-    });
-    return result;
+function getLink(linkTemplate, linkNameTemplate, match) {
+    let url = linkTemplate;
+    let name = linkNameTemplate;
+    for (const [index, group] of match.entries()) {
+        url = url.replace(`$${index}`, group);
+        name = name.replace(`$${index}`, group);
+    }
+    return { name, url };
 }
 
 
 /***/ }),
 
-/***/ 583:
+/***/ 2947:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -155,11 +194,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updatePrText = exports.getPrText = exports.makeLinkText = exports.addLinks = exports.publishLinks = exports.getInserter = void 0;
+exports.addLinks = exports.publishLinks = exports.getInserter = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const inserters = {
-    'start': (input, text) => `${text}\n\n${input}`,
-    'end': (input, text) => `${input}\n\n${text}`,
+    start: (input, text) => `${text}\n\n${input}`,
+    end: (input, text) => `${input}\n\n${text}`
 };
 function getInserter(linkLocation) {
     const inserter = inserters[linkLocation];
@@ -169,37 +208,29 @@ function getInserter(linkLocation) {
     return inserter;
 }
 exports.getInserter = getInserter;
-function publishLinks(octokit, links, linkName, inserter) {
+function publishLinks(octokit, links, linkPreamble, inserter) {
     return __awaiter(this, void 0, void 0, function* () {
         const text = getPrText();
-        const updatedText = addLinks(text, links, linkName, inserter);
-        if (updatedText != text) {
+        const updatedText = addLinks(text, links, linkPreamble, inserter);
+        if (updatedText !== text) {
             updatePrText(octokit, updatedText);
         }
     });
 }
 exports.publishLinks = publishLinks;
-function addLinks(text, links, linkName, inserter) {
-    let linksText = links
-        .filter(link => !text.includes(link))
-        .map(link => makeLinkText(linkName, link))
-        .join("\n\n");
+function addLinks(text, links, linkPreamble, inserter) {
+    const linksText = links
+        .filter(link => !text.includes(link.url))
+        .map(link => `[${link.name}](${link.url})`)
+        .join(', ');
     if (linksText) {
-        return inserter(text, linksText);
+        return inserter(text, `${linkPreamble}${linksText}`);
     }
     else {
         return text;
     }
 }
 exports.addLinks = addLinks;
-function makeLinkText(linkName, link) {
-    let name = linkName;
-    if (!linkName) {
-        name = link;
-    }
-    return `[${name}](${link})`;
-}
-exports.makeLinkText = makeLinkText;
 function getPrText() {
     var _a, _b, _c;
     const body = (_c = (_b = (_a = github.context) === null || _a === void 0 ? void 0 : _a.payload) === null || _b === void 0 ? void 0 : _b.pull_request) === null || _c === void 0 ? void 0 : _c.body;
@@ -208,7 +239,6 @@ function getPrText() {
     }
     return body;
 }
-exports.getPrText = getPrText;
 function updatePrText(octokit, text) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
@@ -220,11 +250,10 @@ function updatePrText(octokit, text) {
             owner: pr.owner,
             repo: pr.repo,
             pull_number: pr.number,
-            body: text,
+            body: text
         });
     });
 }
-exports.updatePrText = updatePrText;
 
 
 /***/ }),
@@ -236,7 +265,11 @@ exports.updatePrText = updatePrText;
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -265,26 +298,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
+const link_publisher_1 = __nccwpck_require__(2947);
 const extractor_1 = __nccwpck_require__(9609);
-const linkPublisher_1 = __nccwpck_require__(583);
-const linkGenerator_1 = __nccwpck_require__(211);
+const link_extractor_1 = __nccwpck_require__(3466);
 function run() {
-    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             validateEvent();
-            const sources = (_a = core.getMultilineInput("sources")) === null || _a === void 0 ? void 0 : _a.map(source => source.trim());
-            const issueIdPattern = (_b = core.getInput("issue-pattern")) === null || _b === void 0 ? void 0 : _b.trim();
-            const linkTemplate = (_c = core.getInput("link-template")) === null || _c === void 0 ? void 0 : _c.trim();
-            const linkName = (_d = core.getInput("link-name")) === null || _d === void 0 ? void 0 : _d.trim();
-            const linkLocation = (_e = core.getInput("link-location")) === null || _e === void 0 ? void 0 : _e.trim();
-            const token = (_f = core.getInput("token")) === null || _f === void 0 ? void 0 : _f.trim();
-            const inserter = (0, linkPublisher_1.getInserter)(linkLocation);
+            const sources = core.getMultilineInput('sources');
+            const issueIdPattern = core.getInput('issue-pattern');
+            const linkTemplate = core.getInput('link-template');
+            const linkNameTemplate = core.getInput('link-name-template');
+            const linkPreamble = core.getInput('link-preamble', { trimWhitespace: false });
+            const linkLocation = core.getInput('link-location');
+            const token = core.getInput('token');
+            const inserter = (0, link_publisher_1.getInserter)(linkLocation);
             const octokit = github.getOctokit(token);
             const messages = yield (0, extractor_1.extractAll)(octokit, sources);
-            const links = (0, linkGenerator_1.getLinks)(issueIdPattern, linkTemplate, messages);
+            core.info(`Got messages: ${messages.join(', ')}`);
+            const links = (0, link_extractor_1.getLinks)(issueIdPattern, linkTemplate, linkNameTemplate, messages);
+            core.info(`Got links: ${links.map(l => l.url).join(', ')}`);
             if (links.length) {
-                (0, linkPublisher_1.publishLinks)(octokit, links, linkName, inserter);
+                (0, link_publisher_1.publishLinks)(octokit, links, linkPreamble, inserter);
             }
         }
         catch (error) {
@@ -301,34 +336,6 @@ function validateEvent() {
     }
 }
 run();
-
-
-/***/ }),
-
-/***/ 918:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-if (!Array.prototype.uniq) {
-    Array.prototype.uniq = function () {
-        const seen = new Set();
-        return this.filter(elem => {
-            const isDuplicate = seen.has(elem);
-            seen.add(elem);
-            return !isDuplicate;
-        });
-    };
-}
-function notEmpty(value) {
-    return value !== null && value !== undefined;
-}
-if (!Array.prototype.filterNotNull) {
-    Array.prototype.filterNotNull = function () {
-        return this.filter(notEmpty);
-    };
-}
 
 
 /***/ }),
