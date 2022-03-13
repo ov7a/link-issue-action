@@ -1,5 +1,5 @@
 name: 'Link issue'
-description: 'Link a pull-request to an external issue by editing PR comment. Issue id can be extracted from branch name, PR title or commit description'
+description: 'Link a pull-request to an external issue getting id from branch name, PR title or commit message'
 author: 'ov7a'
 
 inputs:
