@@ -1,6 +1,6 @@
 <p align="center">
-  <a href="https://github.com/ov7a/link-issue-action/actions"><img alt="build status" src="https://github.com/ov7a/link-issue-action/workflows/build/badge.svg"></a>
-  <a href="https://github.com/ov7a/link-issue-action/actions"><img alt="build status" src="https://github.com/ov7a/link-issue-action/workflows/check-dist/badge.svg"></a>
+  <a href="https://github.com/ov7a/link-issue-action/actions/workflows/build.yml"><img alt="build status" src="https://github.com/ov7a/link-issue-action/workflows/build/badge.svg"></a>
+  <a href="https://github.com/ov7a/link-issue-action/actions/workflows/check-dist.yml"><img alt="build status" src="https://github.com/ov7a/link-issue-action/actions/workflows/check-dist.yml/badge.svg"></a>
 </p>
 
 # Link issue Github Action
