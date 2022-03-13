@@ -17,12 +17,12 @@ The possible inputs for this action are:
 | link-template | yes   | |  Link template to paste id or it part into. You should use regex groups here. Example: `https://example.com/browse/issues/$0` |
 | link-name | no        | Related issue | Human-readable name for issue link. If empty, then just duplicates the link itself. |
 | link-location | no    | end | Location to paste link to. Possible values: `start`, `end`. |
-| token     | no        | `${{ github.token }}` | [GitHub token](https://docs.github.com/en/actions/security-guides/automatic-token-authentication) |
+| token     | no        | GITHUB_TOKEN | [GitHub token](https://docs.github.com/en/actions/security-guides/automatic-token-authentication) |
 
 
 ## Examples
 
-### Link JIRA issue from PR title, append to the end of message
+Link JIRA issue from PR title, append to the end of message:
 
 ```yaml
 name: Link issue
@@ -44,7 +44,7 @@ jobs:
           link-template: 'https://somedomain.atlassian.net/browse/$0'
 ```
 
-### Link Redmine issue from commits messages and branch name, append to the start of message
+Link Redmine issue from commits messages and branch name, append to the start of message:
 
 ```yaml
 name: Link issue
