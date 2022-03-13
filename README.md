@@ -1,105 +1,77 @@
 <p align="center">
-  <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
+  <a href="https://github.com/ov7a/link-issue-action/actions"><img alt="build status" src="https://github.com/ov7a/link-issue-action/workflows/build-test/badge.svg"></a>
 </p>
 
-# Create a JavaScript Action using TypeScript
+# Link issue Github Action
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
+This Github action can be used to automatically link PRs to issues from external trackers (JIRA, Redmine, etc) by issue id.
 
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
+## Action inputs
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
+The possible inputs for this action are:
 
-## Create an action from this template
+| Parameter | Required? | Default | Description |
+| --------- | --------- | ------- | ----------- |
+| source    | no        | branch, title, commit | A list of locations where issue id should be taken from. Possible values: branch, title, commit. |
+| issue-pattern | yes   | | A regex to match and extract issue id. For example, use `[A-Z][A-Z]+-\\d+` for JIRA issues or `#(\\d+)` for Redmine issues. |
+| link-template | yes   | |  Link template to paste id or it part into. You should use regex groups here. Example: `https://example.com/browse/issues/$0` |
+| link-name | no        | Related issue | Human-readable name for issue link. If empty, then just duplicates the link itself. |
+| link-location | no    | end | Location to paste link to. Possible values: `start`, `end`. |
+| token     | no        | `${{ github.token }}` | [GitHub token](https://docs.github.com/en/actions/security-guides/automatic-token-authentication) |
 
-Click the `Use this Template` and provide the new repo details for your action
 
-## Code in Main
+## Examples
 
-> First, you'll need to have a reasonably modern version of `node` handy. This won't work with versions older than 9, for instance.
-
-Install the dependencies  
-```bash
-$ npm install
-```
-
-Build the typescript and package it for distribution
-```bash
-$ npm run build && npm run package
-```
-
-Run the tests :heavy_check_mark:  
-```bash
-$ npm test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
-```
-
-## Change action.yml
-
-The action.yml defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-import * as core from '@actions/core';
-...
-
-async function run() {
-  try { 
-      ...
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Publish to a distribution branch
-
-Actions are run from GitHub repos so we will checkin the packed dist folder. 
-
-Then run [ncc](https://github.com/zeit/ncc) and push the results:
-```bash
-$ npm run package
-$ git add dist
-$ git commit -a -m "prod dependencies"
-$ git push origin releases/v1
-```
-
-Note: We recommend using the `--license` option for ncc, which will create a license file for all of the production node modules used in your project.
-
-Your action is now published! :rocket: 
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-
-## Validate
-
-You can now validate the action by referencing `./` in a workflow in your repo (see [test.yml](.github/workflows/test.yml))
+### Link JIRA issue from PR title, append to the end of message
 
 ```yaml
-uses: ./
-with:
-  milliseconds: 1000
+name: Link issue
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  link-jira-issue:
+    name: Link Jira Issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Link Jira Issue
+        uses: ov7a/link-issue-action@v1
+        with:
+          source: title
+          issue-pattern: '[A-Z][A-Z]+-\\d'
+          link-template: 'https://somedomain.atlassian.net/browse/$0'
 ```
 
-See the [actions tab](https://github.com/actions/typescript-action/actions) for runs of this action! :rocket:
+### Link Redmine issue from commits messages and branch name, append to the start of message
 
-## Usage:
+```yaml
+name: Link issue
 
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  link-redmine-issue:
+    name: Link Redmine Issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Link Redmine Issue
+        uses: ov7a/link-issue-action@v1
+        with:
+          source: |
+            branch
+            commit
+          issue-pattern: '#(\\d+)'
+          link-template: 'https://somedomain.com/issues/$1'
+          link-name: See issue
+          link-location: start
+```
+
+## Building
+
+```bash
+npm run build && npm run package && npm test
+```

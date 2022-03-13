@@ -1,11 +1,44 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Link issue'
+description: 'Link a pull-request to an external issue by editing PR comment. Issue id can be extracted from branch name, PR title or commit description'
+author: 'ov7a'
+
 inputs:
-  milliseconds: # change this
+
+  source:
+    required: false
+    description: 'A list of locations where issue id should be taken from. Possible values: branch, title, commit.'
+    default: |
+      branch
+      title
+      commit
+
+  issue-pattern:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'A regex to match and extract issue id. For example, use "[A-Z][A-Z]+-\\d+" for JIRA issues or "#(\\d+)" for Redmine issues.'  
+
+  link-template:
+    required: true
+    description: 'Link template to paste id or it part into. You should use regex groups here. Example: "https://example.com/browse/issues/$0"'    
+
+  link-name:
+    required: false    
+    description: 'Human-readable name for issue link. If empty, then just duplicates the link itself.'
+    default: 'Related issue'
+
+  link-location:
+    required: false    
+    description: 'Location to paste link to. Possible values: start, end.'
+    default: 'end'
+
+  token:
+    required: true
+    description: 'The GitHub authentication token'
+    default: ${{ github.token }}
+
 runs:
   using: 'node16'
   main: 'dist/index.js'
+
+branding:
+  icon: 'link'
+  color: 'blue'
