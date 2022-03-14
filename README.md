@@ -35,14 +35,13 @@ on:
 
 jobs:
   link-jira-issue:
-    name: Link Jira Issue
     runs-on: ubuntu-latest
     steps:
       - name: Link Jira Issue
         uses: ov7a/link-issue-action@v1
         with:
           sources: title
-          issue-pattern: '[A-Z][A-Z]+-\d'
+          issue-pattern: '[A-Z][A-Z]+-\d+'
           link-template: 'https://somedomain.atlassian.net/browse/$0'
 ```
 
@@ -57,7 +56,6 @@ on:
 
 jobs:
   link-redmine-issue:
-    name: Link Redmine Issue
     runs-on: ubuntu-latest
     steps:
       - name: Link Redmine Issue
