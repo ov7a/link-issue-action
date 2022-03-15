@@ -1,5 +1,5 @@
 import * as github from '@actions/github'
-import {IssueLink, Octokit} from './types'
+import {IssueLink, Octokit, PR} from './types'
 
 type Inserter = (input: string, text: string) => string
 
@@ -21,12 +21,18 @@ export function getInserter(linkLocation: string): Inserter {
 }
 
 export async function publishLinks(octokit: Octokit, links: IssueLink[], linkPreamble: string, inserter: Inserter): Promise<void> {
-    const text = getPrText()
+    const pr = github.context?.issue
+
+    if (!pr) {
+        throw new Error('Unable to retrieve PR data.')
+    }
+
+    const text = await getPrText(pr, octokit)
 
     const updatedText = addLinks(text, links, linkPreamble, inserter)
 
     if (updatedText !== text) {
-        updatePrText(octokit, updatedText)
+        updatePrText(pr, octokit, updatedText)
     }
 }
 
@@ -43,21 +49,17 @@ export function addLinks(text: string, links: IssueLink[], linkPreamble: string,
     }
 }
 
-function getPrText(): string {
-    const body = github.context?.payload?.pull_request?.body
-    if (!body) {
-        throw new Error('Unable to retrieve PR text.')
-    }
-    return body
+async function getPrText(pr: PR, octokit: Octokit): Promise<string> {
+    const response = await octokit.rest.pulls.get({
+        owner: pr.owner,
+        repo: pr.repo,
+        pull_number: pr.number
+    })
+
+    return response?.data?.body ?? ''
 }
 
-async function updatePrText(octokit: Octokit, text: string): Promise<void> {
-    const pr = github.context?.issue
-
-    if (!pr) {
-        throw new Error('Unable to retrieve PR data.')
-    }
-
+async function updatePrText(pr: PR, octokit: Octokit, text: string): Promise<void> {
     await octokit.rest.pulls.update({
         owner: pr.owner,
         repo: pr.repo,

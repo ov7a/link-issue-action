@@ -209,11 +209,16 @@ function getInserter(linkLocation) {
 }
 exports.getInserter = getInserter;
 function publishLinks(octokit, links, linkPreamble, inserter) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        const text = getPrText();
+        const pr = (_a = github.context) === null || _a === void 0 ? void 0 : _a.issue;
+        if (!pr) {
+            throw new Error('Unable to retrieve PR data.');
+        }
+        const text = yield getPrText(pr, octokit);
         const updatedText = addLinks(text, links, linkPreamble, inserter);
         if (updatedText !== text) {
-            updatePrText(octokit, updatedText);
+            updatePrText(pr, octokit, updatedText);
         }
     });
 }
@@ -231,21 +236,19 @@ function addLinks(text, links, linkPreamble, inserter) {
     }
 }
 exports.addLinks = addLinks;
-function getPrText() {
-    var _a, _b, _c;
-    const body = (_c = (_b = (_a = github.context) === null || _a === void 0 ? void 0 : _a.payload) === null || _b === void 0 ? void 0 : _b.pull_request) === null || _c === void 0 ? void 0 : _c.body;
-    if (!body) {
-        throw new Error('Unable to retrieve PR text.');
-    }
-    return body;
-}
-function updatePrText(octokit, text) {
-    var _a;
+function getPrText(pr, octokit) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
-        const pr = (_a = github.context) === null || _a === void 0 ? void 0 : _a.issue;
-        if (!pr) {
-            throw new Error('Unable to retrieve PR data.');
-        }
+        const response = yield octokit.rest.pulls.get({
+            owner: pr.owner,
+            repo: pr.repo,
+            pull_number: pr.number
+        });
+        return (_b = (_a = response === null || response === void 0 ? void 0 : response.data) === null || _a === void 0 ? void 0 : _a.body) !== null && _b !== void 0 ? _b : '';
+    });
+}
+function updatePrText(pr, octokit, text) {
+    return __awaiter(this, void 0, void 0, function* () {
         yield octokit.rest.pulls.update({
             owner: pr.owner,
             repo: pr.repo,
