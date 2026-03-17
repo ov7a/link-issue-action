@@ -1,5 +1,12 @@
-import {expect, test} from '@jest/globals'
-import {addLinks, getInserter} from '../src/link-publisher'
+import {expect, test, describe, beforeEach, jest} from '@jest/globals'
+import * as github from '@actions/github'
+import {addLinks, getInserter, publishLinks} from '../src/link-publisher'
+
+const mockContext = github.context as unknown as {
+    issue: {owner: string; repo: string; number: number} | null
+    payload: {pull_request: {title: string} | null}
+    eventName: string
+}
 
 const sampleLinks = [
     {url: 'https://example.com/1234', name: 'related issue'},
@@ -45,4 +52,59 @@ test('preamble can be empty', async () => {
 
 test('should fail on unknown link location', async () => {
     expect(() => getInserter('I dont know')).toThrow('Invalid linkLocation: I dont know')
+})
+
+describe('publishLinks', () => {
+    const mockGet = jest.fn<() => Promise<any>>()
+    const mockUpdate = jest.fn<() => Promise<any>>()
+    const mockOctokit = {
+        rest: {
+            pulls: {
+                get: mockGet,
+                update: mockUpdate
+            }
+        }
+    } as any
+
+    beforeEach(() => {
+        mockContext.issue = {owner: 'myorg', repo: 'myrepo', number: 7}
+        mockGet.mockResolvedValue({data: {body: 'Initial PR description'}})
+        mockUpdate.mockResolvedValue({})
+    })
+
+    test('should update PR body when new links need to be added', async () => {
+        const inserter = getInserter('end')
+        await publishLinks(mockOctokit, sampleLinks, 'Related: ', inserter)
+        expect(mockUpdate).toHaveBeenCalledWith({
+            owner: 'myorg',
+            repo: 'myrepo',
+            pull_number: 7,
+            body: 'Initial PR description\n\nRelated: [related issue](https://example.com/1234), [1234](https://ov7a.github.io/)'
+        })
+    })
+
+    test('should not update PR body when all links are already present', async () => {
+        const textWithLinks = 'Desc with https://example.com/1234 and https://ov7a.github.io/'
+        mockGet.mockResolvedValue({data: {body: textWithLinks}})
+        const inserter = getInserter('end')
+        await publishLinks(mockOctokit, sampleLinks, 'Related: ', inserter)
+        expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    test('should treat null PR body as empty string', async () => {
+        mockGet.mockResolvedValue({data: {body: null}})
+        const inserter = getInserter('end')
+        await publishLinks(mockOctokit, sampleLinks, '', inserter)
+        expect(mockUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({
+                body: expect.stringContaining('https://example.com/1234')
+            })
+        )
+    })
+
+    test('should throw when PR context is not available', async () => {
+        mockContext.issue = null
+        const inserter = getInserter('end')
+        await expect(publishLinks(mockOctokit, sampleLinks, '', inserter)).rejects.toThrow('Unable to retrieve PR data.')
+    })
 })

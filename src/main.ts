@@ -44,4 +44,6 @@ function validateEvent(): void {
     }
 }
 
+export {run, validateEvent}
+
 run()
