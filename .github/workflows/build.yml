@@ -15,8 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          npm install
-      - run: |
-          npm run all
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Check formatting
+        run: npm run format-check
+      - name: Lint
+        run: npm run lint
+      - name: Package
+        run: npm run package
+      - name: Test
+        run: npm test
 
